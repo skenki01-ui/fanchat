@@ -35,7 +35,7 @@ checkPin();
 },[]);
 
 
-// ⭐ピン判定（24時間対応）
+// ⭐ピン判定
 function checkPin(){
 
 const pins = JSON.parse(localStorage.getItem("pins") || "{}");
@@ -50,6 +50,23 @@ setIsPinned(true);
 setIsPinned(false);
 }
 
+}
+
+
+// ⭐ピン購入（←追加済み）
+function buyPin(){
+
+const pins = JSON.parse(localStorage.getItem("pins") || "{}");
+
+const expire = Date.now() + (24 * 60 * 60 * 1000);
+
+pins[character.id] = expire;
+
+localStorage.setItem("pins", JSON.stringify(pins));
+
+setIsPinned(true);
+
+alert("ピン設定完了！");
 }
 
 
@@ -127,6 +144,14 @@ alert("ターンがありません");
 return;
 }
 
+if(points < 5){
+alert("ポイントが足りません");
+return;
+}
+
+const newPoints = points - 5;
+await updatePoints(newPoints);
+
 const currentInput = input;
 
 const userMsg = {role:"user",text:currentInput};
@@ -150,7 +175,6 @@ setTimeout(async ()=>{
 
 let aiText;
 
-// ⭐ピン中だけ特別
 if(isPinned){
 aiText = `${userName}と話せて嬉しい`;
 }else{
@@ -207,7 +231,6 @@ await updatePoints(newPoints);
 
 const card = drawCard(character.id);
 
-// ⭐カード保存
 await supabase
 .from("cards")
 .insert({
@@ -252,39 +275,44 @@ background:"#fff",
 borderBottom:"1px solid #eee"
 }}>
 
-<div
-onClick={()=>navigate("/home")}
-style={{cursor:"pointer"}}
->
+<div onClick={()=>navigate("/home")} style={{cursor:"pointer"}}>
 ◀︎
 </div>
 
-<div style={{
-display:"flex",
-alignItems:"center"
-}}>
+<div style={{display:"flex",alignItems:"center"}}>
 
-<img
-src={character.img}
-style={{
+<img src={character.img} style={{
 width:"30px",
 height:"30px",
 borderRadius:"50%",
 marginRight:"8px"
-}}
-/>
+}}/>
 
-<div>
-{character.name}
-</div>
+<div>{character.name}</div>
 
 </div>
 
-<div
-onClick={()=>setMenuOpen(true)}
-style={{cursor:"pointer"}}
->
+<div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+
+<div onClick={()=>setMenuOpen(true)} style={{cursor:"pointer"}}>
 残{turn}｜{points}p ☰
+</div>
+
+{!isPinned && (
+<button
+onClick={buyPin}
+style={{
+padding:"4px 10px",
+background:"#ff4da6",
+color:"#fff",
+border:"none",
+borderRadius:"8px"
+}}
+>
+📍ピン
+</button>
+)}
+
 </div>
 
 </div>
@@ -300,27 +328,19 @@ padding:"10px"
 
 {messages.map((m,i)=>(
 
-<div
-key={i}
-style={{
+<div key={i} style={{
 display:"flex",
 marginBottom:"10px",
 justifyContent:m.role==="user"?"flex-end":"flex-start"
-}}
->
+}}>
 
 {m.role==="ai" && (
-
-<img
-src={character.img}
-style={{
+<img src={character.img} style={{
 width:"28px",
 height:"28px",
 borderRadius:"50%",
 marginRight:"8px"
-}}
-/>
-
+}}/>
 )}
 
 <div style={{
@@ -352,16 +372,13 @@ textAlign:"center",
 background:"#fff"
 }}>
 
-<button
-onClick={addTurn}
-style={{
+<button onClick={addTurn} style={{
 padding:"8px 20px",
 background:"#ffa64d",
 border:"none",
 borderRadius:"10px",
 color:"#fff"
-}}
->
+}}>
 +1ターン 5p
 </button>
 
@@ -389,12 +406,7 @@ border:"1px solid #ccc"
 }}
 />
 
-<button
-onClick={send}
-style={{
-marginLeft:"10px"
-}}
->
+<button onClick={send} style={{marginLeft:"10px"}}>
 送信
 </button>
 
